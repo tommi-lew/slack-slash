@@ -8,6 +8,10 @@ get '/' do
 end
 
 get '/ss' do
+  if ENV['SLACK_TOKEN'] != params[:token]
+    halt 404
+  end
+
   if params[:text].nil?
     halt 'Y U NO COMMAND?'
   end

@@ -23,17 +23,28 @@ describe 'Slack Slash' do
   end
 
   describe 'GET /ss' do
+    ENV['SLACK_TOKEN'] = 'SLACKTOKEN'
+
     def do_request(opts = {})
-      get '/ss', opts
+      get '/ss', { token: 'SLACKTOKEN' }.merge(opts)
     end
 
     def get_reservation(app)
       $redis.hget('app_reservation', app)
     end
 
+    describe 'slack token' do
+      context 'mismatch slack token' do
+        it 'returns a 404' do
+          do_request text: 'available', token: 'NOTTOKEN'
+          expect(last_response.status).to eq(404)
+        end
+      end
+    end
+
     describe 'without params' do
       it "says 'Y U NO COMMAND?'" do
-        get '/ss'
+        do_request
         expect(last_response.body).to eq('Y U NO COMMAND?')
       end
     end
