@@ -11,6 +11,7 @@ RSpec.configure do |config|
     config.before(x) do
       # Redis
       $redis.del('app_reservation')
+      $redis.del('apps_for_reservation')
     end
   end
 end

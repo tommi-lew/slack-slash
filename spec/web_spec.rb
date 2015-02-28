@@ -38,6 +38,10 @@ describe 'Slack Slash' do
       end
     end
 
+    before do
+      create_apps_for_reservation
+    end
+
     describe 'reserve app' do
       it 'sets username as hash value in redis and responds' do
         do_request user_name: 'bob', text: 'use euro'
@@ -80,7 +84,7 @@ describe 'Slack Slash' do
       end
     end
 
-    describe 'enquires availability' do
+    describe 'enquires available apps' do
       it 'responds with available apps' do
         create_apps_for_reservation
 
@@ -92,6 +96,32 @@ describe 'Slack Slash' do
         expect(response).to match(/dollar/)
         expect(response).to match(/pound/)
         expect(response).not_to match(/euro/)
+      end
+
+      context 'no available apps' do
+        it 'responds with a message' do
+          $redis.del('apps_for_reservation')
+          $redis.sadd('apps_for_reservation', 'euro')
+          set_reservation('euro', 'alice')
+
+          do_request text: 'available'
+
+          expect(last_response.body).to match(/No available apps/)
+        end
+      end
+    end
+
+    describe 'enquires reserved apps' do
+      it 'responds with reserved apps' do
+        create_apps_for_reservation
+        set_reservation('euro', 'alice')
+        set_reservation('pound', 'bob')
+
+        do_request text: 'used'
+
+        expect(last_response.body).to match(/euro \(alice\)/)
+        expect(last_response.body).to match(/pound \(bob\)/)
+        expect(last_response.body).not_to match(/dollar \(\)/)
       end
     end
 
@@ -111,7 +141,7 @@ describe 'Slack Slash' do
       create_apps_for_reservation
       set_reservation('pound', 'alice')
 
-      expect(available_apps).to match_array(['euro', 'dollar'])
+      expect(get_available_apps).to match_array(['euro', 'dollar'])
     end
   end
 
@@ -121,7 +151,7 @@ describe 'Slack Slash' do
       set_reservation('euro', 'alice')
       set_reservation('pound', 'alice')
 
-      expect(reserved_apps).to match_array(['pound', 'euro'])
+      expect(get_reserved_apps).to match_array(['pound', 'euro'])
     end
   end
 end

@@ -31,7 +31,9 @@ get '/ss' do
     when 'release'
       release_app(current_reserver, username, app)
     when 'available'
-      halt "Available apps: #{available_apps.join(', ')}"
+      available_apps
+    when 'used'
+      reserved_apps
   end
 end
 
@@ -54,11 +56,29 @@ def release_app(current_reserver, requester, app)
 end
 
 def available_apps
+  if get_available_apps.size > 0
+    halt "Available apps: #{get_available_apps.join(', ')}"
+  else
+    halt "No available apps, don't look at me like this."
+  end
+end
+
+def reserved_apps
+  apps = $redis.hgetall(APP_RESERVATION_KEY)
+
+  reserved_messages = apps.inject([]) do |result, (app, username)|
+    result << "#{app} (#{username})"
+  end
+
+  halt 'Used apps: ' + reserved_messages.join(', ')
+end
+
+def get_available_apps
   all_apps = $redis.smembers(APPS_FOR_RESERVATION_KEY)
   all_apps.select{ |app| $redis.hget(APP_RESERVATION_KEY, app).nil? }
 end
 
-def reserved_apps
+def get_reserved_apps
   all_apps = $redis.smembers(APPS_FOR_RESERVATION_KEY)
   all_apps.reject{ |app| $redis.hget(APP_RESERVATION_KEY, app).nil? }
 end
