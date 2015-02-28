@@ -6,5 +6,11 @@ require 'rspec'
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
-end
 
+  [:each].each do |x|
+    config.before(x) do
+      # Redis
+      $redis.del('app_reservation')
+    end
+  end
+end
