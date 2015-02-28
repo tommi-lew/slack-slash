@@ -5,6 +5,16 @@ describe 'Slack Slash' do
     Sinatra::Application
   end
 
+  def set_reservation(app, username)
+    $redis.hset('app_reservation', app, username)
+  end
+
+  def create_apps_for_reservation
+    $redis.sadd('apps_for_reservation', 'euro')
+    $redis.sadd('apps_for_reservation', 'dollar')
+    $redis.sadd('apps_for_reservation', 'pound')
+  end
+
   describe 'GET /' do
     it "says 'Slack Slash'" do
       get '/'
@@ -15,10 +25,6 @@ describe 'Slack Slash' do
   describe 'GET /ss' do
     def do_request(opts = {})
       get '/ss', opts
-    end
-
-    def set_reservation(app, username)
-      $redis.hset('app_reservation', app, username)
     end
 
     def get_reservation(app)
@@ -72,6 +78,50 @@ describe 'Slack Slash' do
           expect(last_response.body).to eq('you cannot release euro, it is reserved by bob')
         end
       end
+    end
+
+    describe 'enquires availability' do
+      it 'responds with available apps' do
+        create_apps_for_reservation
+
+        set_reservation('euro', 'alice')
+
+        do_request text: 'available'
+
+        response = last_response.body
+        expect(response).to match(/dollar/)
+        expect(response).to match(/pound/)
+        expect(response).not_to match(/euro/)
+      end
+    end
+
+    describe 'app does not exist' do
+      it 'responds with an error message' do
+        create_apps_for_reservation
+
+        do_request text: 'use fish'
+
+        expect(last_response.body).to eq('App does not exist')
+      end
+    end
+  end
+
+  describe '#available_apps' do
+    it 'returns available apps' do
+      create_apps_for_reservation
+      set_reservation('pound', 'alice')
+
+      expect(available_apps).to match_array(['euro', 'dollar'])
+    end
+  end
+
+  describe '#reserved_apps' do
+    it 'returns reserved apps' do
+      create_apps_for_reservation
+      set_reservation('euro', 'alice')
+      set_reservation('pound', 'alice')
+
+      expect(reserved_apps).to match_array(['pound', 'euro'])
     end
   end
 end

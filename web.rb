@@ -1,6 +1,7 @@
 require_relative File.join('config', 'shared.rb')
 
 APP_RESERVATION_KEY = 'app_reservation'
+APPS_FOR_RESERVATION_KEY = 'apps_for_reservation'
 
 get '/' do
   'Slack Slash'
@@ -19,11 +20,18 @@ get '/ss' do
 
   current_reserver = $redis.hget(APP_RESERVATION_KEY, app)
 
+  if %w(use release).include?(command) &&
+      !$redis.sismember(APPS_FOR_RESERVATION_KEY, app)
+    halt 'App does not exist'
+  end
+
   case command
     when 'use'
       reserve_app(current_reserver, username, app)
     when 'release'
       release_app(current_reserver, username, app)
+    when 'available'
+      halt "Available apps: #{available_apps.join(', ')}"
   end
 end
 
@@ -43,4 +51,14 @@ def release_app(current_reserver, requester, app)
     $redis.hdel(APP_RESERVATION_KEY, app)
     halt "you have released #{app}"
   end
+end
+
+def available_apps
+  all_apps = $redis.smembers(APPS_FOR_RESERVATION_KEY)
+  all_apps.select{ |app| $redis.hget(APP_RESERVATION_KEY, app).nil? }
+end
+
+def reserved_apps
+  all_apps = $redis.smembers(APPS_FOR_RESERVATION_KEY)
+  all_apps.reject{ |app| $redis.hget(APP_RESERVATION_KEY, app).nil? }
 end
