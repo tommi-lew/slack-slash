@@ -62,3 +62,6 @@ DEPENDENCIES
   sinatra-contrib
   thin
   unicorn
+
+BUNDLED WITH
+   1.10.3
