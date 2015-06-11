@@ -95,6 +95,28 @@ describe 'Slack Slash' do
       end
     end
 
+    describe 'frelease app' do
+      it 'remove hash value in redis and responds' do
+        set_reservation('euro', 'alice')
+
+        do_request user_name: 'alice', text: 'frelease euro fkey'
+
+        expect(get_reservation('euro')).to be_nil
+        expect(last_response.body).to eq('you have force released euro')
+      end
+
+      context 'missing fkey' do
+        it 'does not modify redis and responds' do
+          set_reservation('euro', 'bob')
+
+          do_request user_name: 'alice', text: 'frelease euro'
+
+          expect(get_reservation('euro')).to eq('bob')
+          expect(last_response.body).to eq('unable to release euro')
+        end
+      end
+    end
+
     describe 'enquires available apps' do
       it 'responds with available apps' do
         create_apps_for_reservation

@@ -21,6 +21,7 @@ get '/ss' do
 
   command = text_command.split(' ')[0]
   app = text_command.split(' ')[1]
+  fkey = text_command.split(' ')[2]
 
   current_reserver = $redis.hget(APP_RESERVATION_KEY, app)
 
@@ -34,6 +35,8 @@ get '/ss' do
       reserve_app(current_reserver, username, app)
     when 'release'
       release_app(current_reserver, username, app)
+    when 'frelease'
+      frelease_app(username, app, fkey)
     when 'available'
       available_apps
     when 'used'
@@ -56,6 +59,15 @@ def release_app(current_reserver, requester, app)
   else
     $redis.hdel(APP_RESERVATION_KEY, app)
     halt "you have released #{app}"
+  end
+end
+
+def frelease_app(requester, app, fkey)
+  if fkey != (ENV['FKEY'] || 'fkey')
+    halt "unable to release #{app}"
+  else
+    $redis.hdel(APP_RESERVATION_KEY, app)
+    halt "you have force released #{app}"
   end
 end
 
