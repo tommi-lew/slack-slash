@@ -16,4 +16,5 @@ group :test do
   gem 'rspec'
   gem 'nyan-cat-formatter'
   gem 'timecop'
+  gem 'codeclimate-test-reporter', require: nil
 end
