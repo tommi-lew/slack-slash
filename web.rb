@@ -23,7 +23,12 @@ get '/ss' do
   app = text_command.split(' ')[1]
   fkey = text_command.split(' ')[2]
 
-  current_reserver = $redis.hget(APP_RESERVATION_KEY, app)
+  current_reserver_data = $redis.hget(APP_RESERVATION_KEY, app)
+  current_reserver = if current_reserver_data
+                       JSON.parse(current_reserver_data)['username']
+                     else
+                       nil
+                     end
 
   if %w(use release).include?(command) &&
       !$redis.sismember(APPS_FOR_RESERVATION_KEY, app)
@@ -46,7 +51,7 @@ end
 
 def reserve_app(current_reserver, requester, app)
   if current_reserver.nil?
-    $redis.hset(APP_RESERVATION_KEY, app, requester)
+    $redis.hset(APP_RESERVATION_KEY, app, { username: requester }.to_json)
     halt "#{app} is now yours, #{requester}"
   else
     halt "#{app} is reserved by #{current_reserver}"
@@ -83,8 +88,9 @@ def reserved_apps
   apps = $redis.hgetall(APP_RESERVATION_KEY)
   all_apps = $redis.smembers(APPS_FOR_RESERVATION_KEY)
 
-  reserved_messages = apps.inject([]) do |result, (app, username)|
-    result << "#{app} - #{username}"
+  reserved_messages = apps.inject([]) do |result, (app, data)|
+    data = JSON.parse(data)
+    result << "#{app} - #{data['username']}"
   end
 
   halt "Used apps (#{apps.size}/#{all_apps.size}): \n" + reserved_messages.join("\n")

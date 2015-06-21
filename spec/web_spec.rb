@@ -6,7 +6,7 @@ describe 'Slack Slash' do
   end
 
   def set_reservation(app, username)
-    $redis.hset('app_reservation', app, username)
+    $redis.hset('app_reservation', app, { username: username }.to_json)
   end
 
   def create_apps_for_reservation
@@ -30,7 +30,8 @@ describe 'Slack Slash' do
     end
 
     def get_reservation(app)
-      $redis.hget('app_reservation', app)
+      data = $redis.hget('app_reservation', app)
+      data ? JSON.parse(data) : nil
     end
 
     describe 'slack token' do
@@ -54,10 +55,10 @@ describe 'Slack Slash' do
     end
 
     describe 'reserve app' do
-      it 'sets username as hash value in redis and responds' do
+      it 'sets reservation data in redis and responds' do
         do_request user_name: 'bob', text: 'use euro'
 
-        expect(get_reservation('euro')).to eq('bob')
+        expect(get_reservation('euro')['username']).to eq('bob')
         expect(last_response.body).to eq('euro is now yours, bob')
       end
 
@@ -67,14 +68,14 @@ describe 'Slack Slash' do
 
           do_request user_name: 'bob', text: 'use euro'
 
-          expect(get_reservation('euro')).to eq('alice')
+          expect(get_reservation('euro')['username']).to eq('alice')
           expect(last_response.body).to eq('euro is reserved by alice')
         end
       end
     end
 
     describe 'release app' do
-      it 'remove hash value in redis and responds' do
+      it 'remove reservation data in redis and responds' do
         set_reservation('euro', 'alice')
 
         do_request user_name: 'alice', text: 'release euro'
@@ -89,14 +90,14 @@ describe 'Slack Slash' do
 
           do_request user_name: 'alice', text: 'release euro'
 
-          expect(get_reservation('euro')).to eq('bob')
+          expect(get_reservation('euro')['username']).to eq('bob')
           expect(last_response.body).to eq('you cannot release euro, it is reserved by bob')
         end
       end
     end
 
     describe 'frelease app' do
-      it 'remove hash value in redis and responds' do
+      it 'remove reservation data in redis and responds' do
         set_reservation('euro', 'alice')
 
         do_request user_name: 'alice', text: 'frelease euro fkey'
@@ -111,7 +112,7 @@ describe 'Slack Slash' do
 
           do_request user_name: 'alice', text: 'frelease euro'
 
-          expect(get_reservation('euro')).to eq('bob')
+          expect(get_reservation('euro')['username']).to eq('bob')
           expect(last_response.body).to eq('unable to release euro')
         end
       end
