@@ -80,7 +80,7 @@ end
 
 def available_apps
   if get_available_apps.size > 0
-    halt "Available apps: #{get_available_apps.join("\n")}"
+    halt "Available apps: \n #{get_available_apps.join("\n")}"
   else
     halt "No available apps, don't look at me like this."
   end
