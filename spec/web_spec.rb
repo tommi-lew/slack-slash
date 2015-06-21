@@ -185,7 +185,7 @@ describe 'Slack Slash' do
       it 'adds new app into the redis set' do
         do_request text: 'add yen admin_key'
 
-        expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(4)
+        expect($redis.scard(APPS_FOR_RESERVATION_KEY)).to eq(4)
         expect(last_response.body).to eq('yen is added')
       end
 
@@ -193,7 +193,7 @@ describe 'Slack Slash' do
         it 'does nothing and responds' do
           do_request text: 'add euro admin_key'
 
-          expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(3)
+          expect($redis.scard(APPS_FOR_RESERVATION_KEY)).to eq(3)
           expect(last_response.body).to eq('euro already exist')
         end
       end
@@ -202,7 +202,7 @@ describe 'Slack Slash' do
         it 'does nothing and responds' do
           do_request text: 'add yen'
 
-          expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(3)
+          expect($redis.scard(APPS_FOR_RESERVATION_KEY)).to eq(3)
           expect(last_response.body).to eq('Unable to add a new app')
         end
       end

@@ -88,14 +88,14 @@ end
 
 def reserved_apps
   apps = $redis.hgetall(APP_RESERVATION_KEY)
-  all_apps = $redis.smembers(APPS_FOR_RESERVATION_KEY)
+  no_of_apps = $redis.scard(APPS_FOR_RESERVATION_KEY)
 
   reserved_messages = apps.inject([]) do |result, (app, data)|
     data = JSON.parse(data)
     result << "#{app} - #{data['username']} since #{data['reserved_at']}"
   end
 
-  halt "Used apps (#{apps.size}/#{all_apps.size}): \n" + reserved_messages.join("\n")
+  halt "Used apps (#{apps.size}/#{no_of_apps}): \n" + reserved_messages.join("\n")
 end
 
 def get_available_apps
