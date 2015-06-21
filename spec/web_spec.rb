@@ -152,6 +152,7 @@ describe 'Slack Slash' do
 
         do_request text: 'used'
 
+        expect(last_response.body =~ /Used apps \(2\/3\)/).not_to be_nil
         expect(last_response.body).to match(/euro - alice/)
         expect(last_response.body).to match(/pound - bob/)
         expect(last_response.body).not_to match(/dollar/)
