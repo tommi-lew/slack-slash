@@ -1,2 +1,3 @@
 language: ruby
+services: redis
 script: bundle exec rspec spec
