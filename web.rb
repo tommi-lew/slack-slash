@@ -83,10 +83,10 @@ def reserved_apps
   apps = $redis.hgetall(APP_RESERVATION_KEY)
 
   reserved_messages = apps.inject([]) do |result, (app, username)|
-    result << "#{app} (#{username})"
+    result << "#{app} - #{username}"
   end
 
-  halt 'Used apps: ' + reserved_messages.join(', ')
+  halt "Used apps: \n" + reserved_messages.join("\n")
 end
 
 def get_available_apps

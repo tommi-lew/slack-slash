@@ -152,9 +152,9 @@ describe 'Slack Slash' do
 
         do_request text: 'used'
 
-        expect(last_response.body).to match(/euro \(alice\)/)
-        expect(last_response.body).to match(/pound \(bob\)/)
-        expect(last_response.body).not_to match(/dollar \(\)/)
+        expect(last_response.body).to match(/euro - alice/)
+        expect(last_response.body).to match(/pound - bob/)
+        expect(last_response.body).not_to match(/dollar/)
       end
     end
 
