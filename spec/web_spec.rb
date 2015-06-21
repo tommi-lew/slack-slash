@@ -103,20 +103,20 @@ describe 'Slack Slash' do
       it 'remove reservation data in redis and responds' do
         set_reservation('euro', 'alice')
 
-        do_request user_name: 'alice', text: 'frelease euro fkey'
+        do_request user_name: 'alice', text: 'frelease euro admin_key'
 
         expect(get_reservation('euro')).to be_nil
         expect(last_response.body).to eq('you have force released euro')
       end
 
-      context 'missing fkey' do
+      context 'missing admin_key' do
         it 'does not modify redis and responds' do
           set_reservation('euro', 'bob')
 
           do_request user_name: 'alice', text: 'frelease euro'
 
           expect(get_reservation('euro')['username']).to eq('bob')
-          expect(last_response.body).to eq('unable to release euro')
+          expect(last_response.body).to eq('Unable to release euro')
         end
       end
     end
@@ -174,6 +174,68 @@ describe 'Slack Slash' do
         do_request text: 'use fish'
 
         expect(last_response.body).to eq('App does not exist')
+      end
+    end
+
+    describe 'add new app' do
+      before do
+        create_apps_for_reservation
+      end
+
+      it 'adds new app into the redis set' do
+        do_request text: 'add yen admin_key'
+
+        expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(4)
+        expect(last_response.body).to eq('yen is added')
+      end
+
+      context 'app exist' do
+        it 'does nothing and responds' do
+          do_request text: 'add euro admin_key'
+
+          expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(3)
+          expect(last_response.body).to eq('euro already exist')
+        end
+      end
+
+      context 'missing admin key' do
+        it 'does nothing and responds' do
+          do_request text: 'add yen'
+
+          expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(3)
+          expect(last_response.body).to eq('Unable to add a new app')
+        end
+      end
+    end
+
+    describe 'delete app' do
+      before do
+        create_apps_for_reservation
+      end
+
+      it 'delete app from the redis set' do
+        do_request text: 'del euro admin_key'
+
+        expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(2)
+        expect(last_response.body).to eq('euro is deleted')
+      end
+
+      context 'app does not exist' do
+        it 'does nothing and responds' do
+          do_request text: 'del yen admin_key'
+
+          expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(3)
+          expect(last_response.body).to eq('yen does not exist')
+        end
+      end
+
+      context 'missing admin key' do
+        it 'does nothing and responds' do
+          do_request text: 'del yen'
+
+          expect($redis.smembers(APPS_FOR_RESERVATION_KEY).size).to eq(3)
+          expect(last_response.body).to eq('Unable to delete app')
+        end
       end
     end
   end

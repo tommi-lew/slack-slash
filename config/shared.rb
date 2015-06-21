@@ -6,6 +6,7 @@ require 'bundler/setup'
 require 'sinatra'
 require 'sinatra/reloader' if development?
 require 'redis'
+require 'json'
 
 # Redis
 if RACK_ENV == 'production'

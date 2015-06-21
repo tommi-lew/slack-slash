@@ -21,7 +21,7 @@ get '/ss' do
 
   command = text_command.split(' ')[0]
   app = text_command.split(' ')[1]
-  fkey = text_command.split(' ')[2]
+  admin_key = text_command.split(' ')[2]
 
   current_reserver_data = $redis.hget(APP_RESERVATION_KEY, app)
   current_reserver = if current_reserver_data
@@ -41,11 +41,15 @@ get '/ss' do
     when 'release'
       release_app(current_reserver, username, app)
     when 'frelease'
-      frelease_app(username, app, fkey)
+      frelease_app(username, app, admin_key)
     when 'available'
       available_apps
     when 'used'
       reserved_apps
+    when 'add'
+      add_app(app, admin_key)
+    when 'del'
+      delete_app(app, admin_key)
   end
 end
 
@@ -67,13 +71,11 @@ def release_app(current_reserver, requester, app)
   end
 end
 
-def frelease_app(requester, app, fkey)
-  if fkey != (ENV['FKEY'] || 'fkey')
-    halt "unable to release #{app}"
-  else
-    $redis.hdel(APP_RESERVATION_KEY, app)
-    halt "you have force released #{app}"
-  end
+def frelease_app(requester, app, admin_key)
+  admin_key_check(admin_key, "Unable to release #{app}")
+
+  $redis.hdel(APP_RESERVATION_KEY, app)
+  halt "you have force released #{app}"
 end
 
 def available_apps
@@ -104,4 +106,32 @@ end
 def get_reserved_apps
   all_apps = $redis.smembers(APPS_FOR_RESERVATION_KEY)
   all_apps.reject{ |app| $redis.hget(APP_RESERVATION_KEY, app).nil? }
+end
+
+def add_app(name, admin_key)
+  admin_key_check(admin_key, 'Unable to add a new app')
+
+  if $redis.sismember(APPS_FOR_RESERVATION_KEY, name)
+    halt "#{name} already exist"
+  else
+    $redis.sadd(APPS_FOR_RESERVATION_KEY, name)
+    halt "#{name} is added"
+  end
+end
+
+def delete_app(name, admin_key)
+  admin_key_check(admin_key, 'Unable to delete app')
+
+  if $redis.sismember(APPS_FOR_RESERVATION_KEY, name)
+    $redis.srem(APPS_FOR_RESERVATION_KEY, name)
+    halt "#{name} is deleted"
+  else
+    halt "#{name} does not exist"
+  end
+end
+
+def admin_key_check(admin_key, message = 'Unable to perform action')
+  if admin_key != (ENV['ADMIN_KEY'] || 'admin_key')
+    halt message
+  end
 end
