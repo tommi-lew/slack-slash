@@ -6,7 +6,7 @@ describe 'Slack Slash' do
   end
 
   def set_reservation(app, username)
-    $redis.hset('app_reservation', app, { username: username, reserved_at: Time.now.to_i }.to_json)
+    $redis.hset('app_reservation', app, { username: username, reserved_at: Date.today.to_s }.to_json)
   end
 
   def create_apps_for_reservation
@@ -61,7 +61,7 @@ describe 'Slack Slash' do
         do_request user_name: 'bob', text: 'use euro'
 
         expect(get_reservation('euro')['username']).to eq('bob')
-        expect(get_reservation('euro')['reserved_at']).to eq(Time.now.to_i)
+        expect(get_reservation('euro')['reserved_at']).to eq(Date.today.to_s)
         expect(last_response.body).to eq('euro is now yours, bob')
       end
 
@@ -161,8 +161,8 @@ describe 'Slack Slash' do
         expect(
           last_response.body =~ Regexp.new(Regexp.quote("Used apps (2/3)"))
         ).not_to be_nil
-        expect(last_response.body).to match(Regexp.quote("euro - alice since #{Time.now}"))
-        expect(last_response.body).to match(Regexp.quote("pound - bob since #{Time.now}"))
+        expect(last_response.body).to match(Regexp.quote("euro - alice since #{Date.today.to_s}"))
+        expect(last_response.body).to match(Regexp.quote("pound - bob since #{Date.today.to_s}"))
         expect(last_response.body).not_to match(/dollar/)
       end
     end
