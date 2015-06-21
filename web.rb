@@ -51,7 +51,7 @@ end
 
 def reserve_app(current_reserver, requester, app)
   if current_reserver.nil?
-    $redis.hset(APP_RESERVATION_KEY, app, { username: requester }.to_json)
+    $redis.hset(APP_RESERVATION_KEY, app, { username: requester, reserved_at: Time.now.to_i }.to_json)
     halt "#{app} is now yours, #{requester}"
   else
     halt "#{app} is reserved by #{current_reserver}"
@@ -90,7 +90,8 @@ def reserved_apps
 
   reserved_messages = apps.inject([]) do |result, (app, data)|
     data = JSON.parse(data)
-    result << "#{app} - #{data['username']}"
+    reserved_at = Time.at(data['reserved_at'])
+    result << "#{app} - #{data['username']} since #{reserved_at}"
   end
 
   halt "Used apps (#{apps.size}/#{all_apps.size}): \n" + reserved_messages.join("\n")

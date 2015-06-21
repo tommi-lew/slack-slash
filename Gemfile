@@ -15,4 +15,5 @@ group :test do
   gem 'rack-test'
   gem 'rspec'
   gem 'nyan-cat-formatter'
+  gem 'timecop'
 end
