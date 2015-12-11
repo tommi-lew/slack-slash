@@ -38,16 +38,22 @@ get '/ss' do
   case command
     when 'use'
       reserve_app(current_reserver, username, app)
+
     when 'release'
       release_app(current_reserver, username, app)
+
     when 'frelease'
       frelease_app(username, app, admin_key)
-    when 'available'
+
+    when 'available', 'ls'
       available_apps
+
     when 'used'
       reserved_apps
+
     when 'add'
       add_app(app, admin_key)
+
     when 'del'
       delete_app(app, admin_key)
   end

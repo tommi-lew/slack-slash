@@ -122,17 +122,31 @@ describe 'Slack Slash' do
     end
 
     describe 'enquires available apps' do
-      it 'responds with available apps' do
-        create_apps_for_reservation
-
-        set_reservation('euro', 'alice')
-
-        do_request text: 'available'
-
-        response = last_response.body
+      def expect_matches(response)
         expect(response).to match(/dollar/)
         expect(response).to match(/pound/)
         expect(response).not_to match(/euro/)
+      end
+
+      before do
+        create_apps_for_reservation
+        set_reservation('euro', 'alice')
+      end
+
+      it 'responds with available apps' do
+        do_request text: 'available'
+
+        response = last_response.body
+        expect_matches(response)
+      end
+
+      context 'ls alias' do
+        it 'returns the same response' do
+          do_request text: 'ls'
+
+          response = last_response.body
+          expect_matches(response)
+        end
       end
 
       context 'no available apps' do
