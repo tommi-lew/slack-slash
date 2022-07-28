@@ -7,7 +7,10 @@ gem 'unicorn'
 gem 'redis'
 
 group :development do
-  gem 'sinatra-contrib'
+  github 'sinatra/sinatra' do
+    gem 'sinatra-contrib'
+  end
+  
   gem 'thin'
 end
 
